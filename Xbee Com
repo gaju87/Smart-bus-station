@@ -1,0 +1,189 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial Xbee(4,5);
+SoftwareSerial mySerial(7,8);
+
+char Dataarray[300];
+char lnltarray[50];
+String yr="";
+String mnth="";
+String dy="";
+String hr="";
+String mnt="";
+String sec="";
+int i=0,l=0;
+int year=0;
+int month=0;
+int day=0;
+int hour=0;
+int minute=0;
+int second=0;
+boolean infosent=false;
+
+void setup() 
+{
+  Serial.begin(9600);
+  Xbee.begin(9600);
+  mySerial.begin(9600);
+
+  mySerial.listen();
+  delay(100);
+  mySerial.println("AT+CMGF=1");
+  delay(100);
+  mySerial.println("AT+CNMI=2,2,0,0,0");
+  delay(100);
+  mySerial.println("AT+CGNSPWR=1");
+  delay(1000);
+
+  if(mySerial.available())
+  {
+    while(mySerial.available())
+    {
+      Serial.print((char)mySerial.read());
+    }
+  }
+
+  mySerial.println("AT+CGNSURC=3");
+  delay(100);
+  if(mySerial.available())
+  {
+    while(mySerial.available())
+    {
+      Serial.print((char)mySerial.read());
+    }
+  }
+
+  delay(1000);
+  
+}
+
+void loop() 
+{
+  yr="";
+  mnth="";
+  dy="";
+  hr="";
+  mnt="";
+  sec="";
+  i=0;
+  delay(100);
+  getdata();
+  if(Dataarray[16]=='2')
+  {
+    IST();
+  }
+  xbee();
+  
+}
+
+  
+
+void xbee()
+{
+  Xbee.listen();
+  Xbee.println("Anyone?");
+  
+  if(Xbee.find("OK"))
+  {
+    Xbee.print(hour);
+    Xbee.print(":");
+    Xbee.print(minute);
+    Xbee.print(":");
+    Xbee.print(second);
+    Xbee.print("(");
+    Xbee.print(day);
+    Xbee.print("/");
+    Xbee.print(mnth);
+    Xbee.print("/");
+    Xbee.print(year);
+    Xbee.println(")");
+
+    if(infosent==false)
+    {
+      Xbee.println("Driver Name: XYZ");
+      Xbee.println("BUS No:12345");
+      Xbee.println("Depo: Pusad");
+      Xbee.println("Pusad to Nanded");
+      Xbee.println("");
+      infosent=true;
+    }
+  }
+
+  if(Xbee.available()!='OK')
+  {
+    infosent=false;
+  }
+}
+
+
+void getdata()
+{
+  mySerial.listen();
+  delay(100);
+  if(mySerial.available())
+  {
+    delay(100);
+    while(mySerial.available())
+    {
+      delay(5);
+      Dataarray[i]=(char)mySerial.read();
+      Serial.print(Dataarray[i]);
+      i++;
+    }
+    Serial.println();
+  }
+}
+
+void IST()
+{
+  for(i=16;i<20;i++)
+  {
+    yr+=Dataarray[i];
+  }
+
+  for(i=20;i<22;i++)
+  {
+    mnth+=Dataarray[i];
+  }
+
+  for(i=22;i<24;i++)
+  {
+    dy+=Dataarray[i];
+  }
+
+  for(i<24;i<26;i++)
+  {
+    hr+=Dataarray[i];
+  }
+
+  for(i=26;i<28;i++)
+  {
+    mnt+=Dataarray[i];
+  }
+
+  for(i=28;i<30;i++)
+  {
+    sec+=Dataarray[i];
+  }
+
+  year=yr.toInt();
+  month=mnth.toInt();
+  day=dy.toInt();
+  hour=hr.toInt();
+  minute=mnt.toInt();
+  second=sec.toInt();
+
+  minute=minute+30;
+  if(minute<100 && minute>60)
+  {
+    minute=minute-60;
+    hour=hour+1;
+  }
+
+  hour=hour+5;
+  if(hour<30 && hour>23)
+  {
+    hour=hour-24;
+    day=day+1;
+  }
+}
