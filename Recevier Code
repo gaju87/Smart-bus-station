@@ -1,0 +1,83 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial Xbee(4,5);  #intialize serial board with receiver and transmitter pin
+
+char incarray[150];   # define array size
+int i=0,ival=0,l=0;   # intliaze variable
+boolean arrival_time=false;  # Set bollean value
+boolean departure_time=false;
+boolean infodisplay=false;
+int response=0;
+
+void setup() 
+{
+  Serial.begin(9600);  # set band rate
+  Xbee.begin(9600);   # set band rate for xbee module
+}
+
+void loop() 
+{
+  l=0;
+  while(Xbee.available()==0 && response==1)  # check respose  xbee module avaiable and response at their
+  {
+    l++;
+    delay(100);
+    if(l>50)
+    {
+      response=3;
+    }
+  }
+  i=0;
+  if(Xbee.available())   # check availblity
+  {
+    delay(100);
+    while(Xbee.available())
+    {
+      incarray[i]=(char)Xbee.read();   # read xbee serial and check value
+      i++;
+    }
+    ival=i;
+    response=1;    # respose received 
+    
+  }
+
+  delay(100);  #delay of 0.1ms
+  if(incarray[0]=='A' && incarray[6]=='?')   # set xbee available or not?
+  {
+    Xbee.println("OK");   # serail print Xbee is runing ok
+  }
+  
+  else if(incarray[0]=='D' && incarray[11]==':' && infodisplay==false)
+  {
+    for(i=0;i<ival;i++)
+    {
+      Serial.print(incarray[i]);
+      arrival_time=false;
+      infodisplay=true;
+    }
+  }
+
+  else if(isDigit(incarray[0]) && arrival_time==false)
+  {
+    Serial.print("Arrival Time:");
+    for(i=0;i<ival;i++)
+    {
+      Serial.print((char)incarray[i]); 
+    }
+    arrival_time=true;
+  }
+
+  else if(isDigit(incarray[0]) && response==3 && departure_time==false)
+  {
+    Serial.print("Departure Time:");
+    for(i=0;i<ival;i++)
+    {
+      Serial.print((char)incarray[i]); 
+    }
+    departure_time=true;
+  }
+  
+}
+
+  
+
