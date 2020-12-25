@@ -1,0 +1,29 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial Xbee(7,8);
+
+void setup() 
+{
+  Serial.begin(9600);
+  Xbee.begin(9600);
+}
+
+void loop() 
+{
+
+  if(Xbee.available())
+  {
+    while(Xbee.available())
+    {
+      Serial.print((char)Xbee.read());
+    }
+  }
+
+  if(Serial.available())
+  {
+    while(Serial.available())
+    {
+      Xbee.print((char)Serial.read());
+    }
+  }
+}
